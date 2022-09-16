@@ -1,4 +1,5 @@
 import tensorflow as tf
+tf = tf.compat.v1
 from trainer.helpers import bbox_overlap_iou, to_bbox_tf
 
 Layers = tf.keras.layers

@@ -1,5 +1,6 @@
 import argparse
-
+import sys
+sys.path.append('../')
 import numpy as np
 import tensorflow as tf
 from matplotlib import pyplot as plt
@@ -15,14 +16,17 @@ def parse_args():
     parser = argparse.ArgumentParser(description='train_network')
     parser.add_argument('--dataset', dest='dataset', help='KITTI / MOT', default='KITTI')
     parser.add_argument('--data_path', dest='data_path', help='path to data JSON',
-                        default="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Kanchana/data/kitti_tracks.json")
+                        default="/opt/vineet-workspace/lstm_tracker/data/kitti_tracks.json")
+    parser.add_argument('--save_path', dest='save_path', help='path to data JSON',
+                        default="/opt/vineet-workspace/lstm_tracker/data/images/")
     parser.add_argument('--graph', dest='graph', help='model output directory',
-                        default="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Kanchana/models/exp01")
+                        default="/opt/vineet-workspace/lstm_tracker/models/exp01")
     arguments = parser.parse_args()
     return arguments
 
 
-def main(graph_file_path="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Kanchana/models/exp04/"):
+def main(graph_file_path="/opt/vineet-workspace/lstm_tracker/models/exp01,
+         save_path=None)
     graph_file_path = tf.train.latest_checkpoint(graph_file_path)
     model = create_model(timesteps=10, input_dim=4, num_classes=9, hidden_sizes=(32, 32))
     tfconfig = tf.ConfigProto(allow_soft_placement=True)
@@ -44,17 +48,10 @@ def main(graph_file_path="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Ka
         assert output_tensor in all_nodes, "output tensor not found in graph"
 
     auto_time = True
-    gen = mot_data_gen(split='val', testing=True, one_hot_classes=True, anchors=True)
-
+    # gen = mot_data_gen(split='val', testing=True, one_hot_classes=True, anchors=True)
+    gen = kitti_data_gen(split='val', testing=True, one_hot_classes=True, anchors=True)
+    j = 0
     while True:
-        pick = np.random.choice(range(10))
-        if pick == 0:
-            gen = mot_data_gen(split='val', testing=True, one_hot_classes=True, anchors=True)
-        elif pick == 1:
-            gen = kitti_data_gen(split='val', testing=True, one_hot_classes=True, anchors=True)
-        else:
-            pass
-
         # load data
         x, y, x_im, y_im = next(gen)
 
@@ -85,15 +82,11 @@ def main(graph_file_path="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Ka
 
         cx, cy, h, w = y_pred[0, :4]
         image.add_box([cx, cy, w, h], color='orange', thickness=4)
-
-        ax.imshow(np.array(image.get_final()))
-        if auto_time:
-            plt.pause(0.1)
-        else:
-            plt.waitforbuttonpress()
-        plt.close()
+        if save_path is not None:
+            plt.imsave(f'{save_path}/{j}', np.array(image.get_final()))
+            j += 1
 
 
 if __name__ == '__main__':
     args = parse_args()
-    main(graph_file_path=args.graph)
+    main(graph_file_path=args.graph, save_path=args.save_path)

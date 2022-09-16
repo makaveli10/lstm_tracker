@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+tf = tf.compat.v1
 from matplotlib import pyplot as plt
 
 from trainer.data import kitti_data_gen, mot_data_gen

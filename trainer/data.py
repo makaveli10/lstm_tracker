@@ -3,6 +3,7 @@ from collections import defaultdict
 
 import numpy as np
 import tensorflow as tf
+tf=tf.compat.v1
 from matplotlib import pyplot as plt, patches
 
 from dataset_utils.kitti_datum import KITTIDataset
@@ -252,7 +253,11 @@ def joint_data_gen(paths=("/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_K
         #     x, y = next(gens[1])
         # else:
         #     x, y = next(gens[0])
-        x, y = next(gens[0])
+        
+        try:
+            x, y = next(gens[0])
+        except StopIteration:
+            return
 
         if one_hot_classes:
             temp = np.zeros(shape=(x.shape[0], num_classes))

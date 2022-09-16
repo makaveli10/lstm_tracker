@@ -3,7 +3,7 @@ import os
 import sys
 sys.path.append('../')
 import tensorflow as tf
-# tf = tf.compat.v1
+tf = tf.compat.v1
 from trainer.helpers import get_logging_tensor_hook
 from trainer.model import model_fn, get_dataset
 from trainer.data import kitti_data_gen, mot_data_gen, joint_data_gen
@@ -14,13 +14,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description='train_network')
     parser.add_argument('--data_path1', dest='data_path1', help='path to data JSON',
                         default="/opt/vineet-workspace/lstm_tracker/data/kitti_tracks_{}.json")
-    # parser.add_argument('--data_path2', dest='data_path2', help='path to data JSON',
-    #                     default="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Kanchana/data/mot_tracks_{}.json")
     parser.add_argument('--job_dir', dest='output_dir', help='model output directory',
-                        default="/opt/vineet-workspace/lstm_tracker/models/exp01")
+                        default="/opt/vineet-workspace/lstm_tracker/models/exp04")
     parser.add_argument('--lr', dest='lr', help='learning rate', default='0.001')
     parser.add_argument('--batch', dest='batch', help='batch size', default='128')
-    parser.add_argument('--epochs', dest='epochs', help='num epochs', default='1000')
+    parser.add_argument('--epochs', dest='epochs', help='num epochs', default='100')
     parser.add_argument('--eval_int', dest='eval_int', help='eval interval in secs', default='120')
     arguments = parser.parse_args()
     return arguments
@@ -84,6 +82,9 @@ def main(_):
                                     train_spec=train_spec,
                                     eval_spec=eval_spec)
 
+    # classifier.train(
+    #     train_input_fn
+    # )
     # classifier.evaluate(input_fn=val_input_fn, steps=None, hooks=hooks, name='final_eval')
 
     return 0
