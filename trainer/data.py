@@ -47,21 +47,21 @@ def init_track_json(kind="KITTI",
 
 
 def run_init():
-    base_path = "/Users/kanchana/Documents/current/FYP/"
+    base_path = "/opt/vineet-workspace"
 
     init_track_json(
         kind="KITTI",
-        path="{}/data/KITTI_tracking/data_tracking_image_2/training".format(base_path),
-        o_path="{}/fyp_2019/LSTM_Kanchana/data/kitti_tracks_{}.json".format(base_path, "{}")
+        path="{}/datasets/kitti_tracking/training".format(base_path),
+        o_path="{}/lstm_tracker/data/kitti_tracks_{}.json".format(base_path, "{}")
     )
-    init_track_json(
-        kind="MOT",
-        path="{}/data/MOT16/train".format(base_path),
-        o_path="{}/fyp_2019/LSTM_Kanchana/data/mot_tracks_{}.json".format(base_path, "{}")
-    )
+    # init_track_json(
+    #     kind="MOT",
+    #     path="{}/data/MOT16/train".format(base_path),
+    #     o_path="{}/fyp_2019/LSTM_Kanchana/data/mot_tracks_{}.json".format(base_path, "{}")
+    # )
 
 
-def kitti_data_gen(path="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Kanchana/data/kitti_tracks_{}.json",
+def kitti_data_gen(path="/opt/vineet-workspace/lstm_tracker/data/kitti_tracks_{}.json",
                    split="train", testing=False, one_hot_classes=False, anchors=False, num_classes=9):
     """
 
@@ -247,11 +247,12 @@ def joint_data_gen(paths=("/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_K
     gens = (kitti_data_gen, mot_data_gen)
     gens = [gen(path=path, split=split) for gen, path in zip(gens, paths)]
     while True:
-        a = np.random.choice(range(4))  # MOT has over 3 times tracks as KITTI
-        if a < 1:
-            x, y = next(gens[1])
-        else:
-            x, y = next(gens[0])
+        # a = np.random.choice(range(4))  # MOT has over 3 times tracks as KITTI
+        # if a < 1:
+        #     x, y = next(gens[1])
+        # else:
+        #     x, y = next(gens[0])
+        x, y = next(gens[0])
 
         if one_hot_classes:
             temp = np.zeros(shape=(x.shape[0], num_classes))
@@ -300,6 +301,7 @@ def to_bbox(x, y):
 def vis_gen(auto_time=False):
     gen = kitti_data_gen(testing=True)
     # gen = mot_data_gen(testing=True)
+    j = 0
     while True:
         x, y, x_im, y_im = next(gen)
         fig, ax = plt.subplots(1)
@@ -315,9 +317,10 @@ def vis_gen(auto_time=False):
             ih, iw, _ = im.shape
             cx, cy, h, w = i[:4]
             image.add_box([cx, cy, w, h])
-        ax.imshow(np.array(image.get_final()))
-        if auto_time:
-            plt.pause(0.1)
-        else:
-            plt.waitforbuttonpress()
-        plt.close()
+        plt.imsave(f'data/images/{j}.png', np.array(image.get_final()))
+        j+=1
+        # if auto_time:
+        #     plt.pause(0.1)
+        # else:
+        #     plt.waitforbuttonpress()
+        # plt.close()

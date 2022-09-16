@@ -1,8 +1,9 @@
 import argparse
 import os
-
+import sys
+sys.path.append('../')
 import tensorflow as tf
-
+# tf = tf.compat.v1
 from trainer.helpers import get_logging_tensor_hook
 from trainer.model import model_fn, get_dataset
 from trainer.data import kitti_data_gen, mot_data_gen, joint_data_gen
@@ -12,13 +13,13 @@ def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(description='train_network')
     parser.add_argument('--data_path1', dest='data_path1', help='path to data JSON',
-                        default="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Kanchana/data/kitti_tracks_{}.json")
-    parser.add_argument('--data_path2', dest='data_path2', help='path to data JSON',
-                        default="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Kanchana/data/mot_tracks_{}.json")
+                        default="/opt/vineet-workspace/lstm_tracker/data/kitti_tracks_{}.json")
+    # parser.add_argument('--data_path2', dest='data_path2', help='path to data JSON',
+    #                     default="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Kanchana/data/mot_tracks_{}.json")
     parser.add_argument('--job_dir', dest='output_dir', help='model output directory',
-                        default="/Users/kanchana/Documents/current/FYP/fyp_2019/LSTM_Kanchana/models/exp04")
+                        default="/opt/vineet-workspace/lstm_tracker/models/exp01")
     parser.add_argument('--lr', dest='lr', help='learning rate', default='0.001')
-    parser.add_argument('--batch', dest='batch', help='batch size', default='64')
+    parser.add_argument('--batch', dest='batch', help='batch size', default='128')
     parser.add_argument('--epochs', dest='epochs', help='num epochs', default='1000')
     parser.add_argument('--eval_int', dest='eval_int', help='eval interval in secs', default='120')
     arguments = parser.parse_args()
@@ -35,7 +36,7 @@ def main(_):
     def train_input_fn():
         dataset = get_dataset(
             gen=joint_data_gen,
-            data_path=[args.data_path1, args.data_path2],
+            data_path=[args.data_path1],
             num_epochs=int(args.epochs),
             batch_size=int(args.batch),
             prefetch_size=int(args.batch),
@@ -46,7 +47,7 @@ def main(_):
     def val_input_fn():
         dataset = get_dataset(
             gen=joint_data_gen,
-            data_path=[args.data_path1, args.data_path2],
+            data_path=[args.data_path1],
             num_epochs=1,
             batch_size=int(args.batch),
             prefetch_size=int(args.batch),
