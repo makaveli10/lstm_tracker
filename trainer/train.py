@@ -13,12 +13,12 @@ def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(description='train_network')
     parser.add_argument('--data_path1', dest='data_path1', help='path to data JSON',
-                        default="/opt/vineet-workspace/lstm_tracker/data/kitti_tracks_{}.json")
+                        default="/opt/vineet-workspace/lstm_tracker/data/carla_tracks_cars_{}.json")
     parser.add_argument('--job_dir', dest='output_dir', help='model output directory',
-                        default="/opt/vineet-workspace/lstm_tracker/models/exp04")
+                        default="/opt/vineet-workspace/lstm_tracker/models/carla_exp11_cars_only")
     parser.add_argument('--lr', dest='lr', help='learning rate', default='0.001')
     parser.add_argument('--batch', dest='batch', help='batch size', default='128')
-    parser.add_argument('--epochs', dest='epochs', help='num epochs', default='100')
+    parser.add_argument('--epochs', dest='epochs', help='num epochs', default='1000')
     parser.add_argument('--eval_int', dest='eval_int', help='eval interval in secs', default='120')
     arguments = parser.parse_args()
     return arguments

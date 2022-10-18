@@ -1,10 +1,23 @@
 import numpy as np
+from copy import deepcopy
 import tensorflow as tf
 tf = tf.compat.v1
 from matplotlib import pyplot as plt
-
+import sys
+sys.path.append('../')
 from trainer.data import kitti_data_gen, mot_data_gen
 from vis_utils.vis_datum import ImageBoxes
+
+import seaborn as sns
+
+sns.set_style('white')
+sns.set_context('poster')
+
+COLORS = [
+    '#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c',
+    '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5',
+    '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f',
+    '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5']
 
 _TENSORS_TO_LOG = dict((x, x) for x in ['learning_rate',
                                         'mean_squared_loss',
@@ -99,7 +112,7 @@ def bbox_cross_overlap_iou_np(bboxes1, bboxes2):
 
     return inter_area / (union + 0.0001)
 
-def bbox_overlap_iou(bboxes1, bboxes2, ar=False, iou_thresh=False):
+def bbox_overlap_iou(bboxes1, bboxes2, ar=False, iou_thresh=False, train=False, eps=1e-5):
     """
     Coordinates are normalized float values between (0,1). Calculates one to one IOU only.
     It is required for total_bboxes1 = total_bboxes2.
@@ -139,6 +152,8 @@ def bbox_overlap_iou(bboxes1, bboxes2, ar=False, iou_thresh=False):
     iou = inter_area / (union + 0.0001)
     if iou_thresh:
         iou = tf.cast(tf.greater_equal(iou, iou_thresh), tf.int8)
+    if train:
+        return iou + eps
     return iou
 
 
@@ -181,6 +196,43 @@ def bbox_overlap_iou_np(bboxes1, bboxes2, ar=False, iou_thresh=False):
     iou = inter_area / (union + 0.0001)
     if iou_thresh:
         iou = np.greater_equal(iou, iou_thresh)
+    return iou
+
+
+def calc_iou_individual(pred_box, gt_box):
+    """Calculate IoU of single predicted and ground truth box
+    Args:
+        pred_box (list of floats): location of predicted object as
+            [xmin, ymin, xmax, ymax]
+        gt_box (list of floats): location of ground truth object as
+            [xmin, ymin, xmax, ymax]
+    Returns:
+        float: value of the IoU for the two boxes.
+    Raises:
+        AssertionError: if the box is obviously malformed
+    """
+    x1_t, y1_t, x2_t, y2_t = gt_box
+    x1_p, y1_p, x2_p, y2_p = pred_box
+
+    if (x1_p > x2_p) or (y1_p > y2_p):
+        raise AssertionError(
+            "Prediction box is malformed? pred box: {}".format(pred_box))
+    if (x1_t > x2_t) or (y1_t > y2_t):
+        raise AssertionError(
+            "Ground Truth box is malformed? true box: {}".format(gt_box))
+
+    if (x2_t < x1_p or x2_p < x1_t or y2_t < y1_p or y2_p < y1_t):
+        return 0.0
+
+    far_x = np.min([x2_t, x2_p])
+    near_x = np.max([x1_t, x1_p])
+    far_y = np.min([y2_t, y2_p])
+    near_y = np.max([y1_t, y1_p])
+
+    inter_area = (far_x - near_x + 1) * (far_y - near_y + 1)
+    true_box_area = (x2_t - x1_t + 1) * (y2_t - y1_t + 1)
+    pred_box_area = (x2_p - x1_p + 1) * (y2_p - y1_p + 1)
+    iou = inter_area / (true_box_area + pred_box_area - inter_area)
     return iou
 
 
@@ -291,15 +343,21 @@ class SaveImages(tf.train.SessionRunHook):
 if __name__ == '__main__':
     tf.enable_eager_execution()
 
-    bboxes1_val = np.array([[0.70775015, 0.4647078, 0.09439638, 1.8295372],
-                            [0.71460492, 0.46425386, 0.09746107, 1.804698],
-                            [0.72189783, 0.4637695, 0.10073144, 1.77913711],
-                            [0.72967244, 0.46325153, 0.1042289, 1.75281998]])
+    # np.array([[0.70775015, 0.4647078, 0.09439638, 1.8295372],
+    #                         [0.71460492, 0.46425386, 0.09746107, 1.804698],
+    #                         [0.72189783, 0.4637695, 0.10073144, 1.77913711],
+    #                         [0.70775015, 0.4647078, 0.09439638, 1.8295372],
+    #                         [0.71460492, 0.46425386, 0.09746107, 1.804698],
+    #                         [0.72189783, 0.4637695, 0.10073144, 1.77913711],
+    #                         [0.72967244, 0.46325153, 0.1042289, 1.75281998]])
+    
+    # np.array([[0.73856634, 0.46062235, 0.10825005, 1.72384472],
+    #                         [0.74709516, 0.45784283, 0.11233135, 1.69729068],
+    #                         [0.72967244, 0.46325153, 0.1042289, 1.75281998],
+    #                         [0.73856634, 0.46062235, 0.10825005, 1.72384472],
+    #                         [0.74709516, 0.45784283, 0.11233135, 1.69729068],
+    #                         [0.72967244, 0.46325153, 0.1042289, 1.75281998],
+    #                         [0.76612634, 0.45160367, 0.12149236, 1.64145537]])
 
-    bboxes2_val = np.array([[0.73856634, 0.46062235, 0.10825005, 1.72384472],
-                            [0.74709516, 0.45784283, 0.11233135, 1.69729068],
-                            [0.72967244, 0.46325153, 0.1042289, 1.75281998],
-                            [0.76612634, 0.45160367, 0.12149236, 1.64145537]])
-
-    iou_val = bbox_overlap_iou(bboxes1_val, bboxes2_val)
-    print(iou_val)
+    # iou_val = bbox_overlap_iou(bboxes1_val["0"], bboxes2_val["0"]["boxes"], iou_thresh=0.8)
+    # data = get_avg_precision_at_iou(bboxes1_val, bboxes2_val, iou_thr=0.8)

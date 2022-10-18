@@ -4,7 +4,7 @@ from dataset_utils.label_obj import BaseObject
 class KITTIObj(BaseObject):
 
     def __init__(self, x_min, y_min, x_max, y_max, category, truncated, occluded, frame, track, x_3d, y_3d, z_3d, width,
-                 height, length, yaw, observed_angle, pose=None, difficult=None, confidence=None, score=None):
+                 height, length, yaw, observed_angle, pose=None, difficult=None, confidence=None, score=None, distance=None):
         """
         Create Base Object for KITTI Tracking.
 
@@ -40,6 +40,7 @@ class KITTIObj(BaseObject):
         self.ignored = False
         self.valid = False
         self.tracker = -1
+        self.distance=distance
 
         super(KITTIObj, self).__init__(
             x_min=x_min, y_min=y_min, x_max=x_max, y_max=y_max, category=category, truncated=truncated, pose=pose,
@@ -78,6 +79,7 @@ class KITTIObj(BaseObject):
         Y = float(fields[14])  # Y [m]
         Z = float(fields[15])  # Z [m]
         yaw = float(fields[16])  # yaw angle [rad]
+        distance = float(fields[17])
 
         return cls(x_min=x1,
                    y_min=y1,
@@ -95,4 +97,5 @@ class KITTIObj(BaseObject):
                    category=obj_type,
                    truncated=truncation,
                    occluded=occlusion,
-                   observed_angle=obs_angle)
+                   observed_angle=obs_angle,
+                   distance=distance)
